@@ -70,72 +70,77 @@ var LivenessCheckProcessor = /** @class */ (function () {
             lowQualityAuditTrailImage: sessionResult.lowQualityAuditTrail[0],
             sessionId: sessionResult.sessionId
         };
+
+        console.log("Conseguiu? " + (parameters.faceScan != null && parameters.faceScan.length > 0))
+        faceScanResultCallback.cancel();
+
+
         //
         // Part 5:  Make the Networking Call to Your Servers.  Below is just example code, you are free to customize based on how your own API works.
         //
-        this.latestNetworkRequest = new XMLHttpRequest();
-        this.latestNetworkRequest.open("POST", Config.BaseURL + "/liveness-3d");
-        this.latestNetworkRequest.setRequestHeader("Content-Type", "application/json");
-        this.latestNetworkRequest.setRequestHeader("X-Device-Key", Config.DeviceKeyIdentifier);
-        this.latestNetworkRequest.setRequestHeader("X-User-Agent", FaceTecSDK.createFaceTecAPIUserAgentString(sessionResult.sessionId));
-        this.latestNetworkRequest.onreadystatechange = function () {
-            //
-            // Part 6:  In our Sample, we evaluate a boolean response and treat true as was successfully processed and should proceed to next step,
-            // and handle all other responses by cancelling out.
-            // You may have different paradigms in your own API and are free to customize based on these.
-            //
-            if (_this.latestNetworkRequest.readyState === XMLHttpRequest.DONE) {
-                try {
-                    var responseJSON = JSON.parse(_this.latestNetworkRequest.responseText);
-                    var scanResultBlob = responseJSON.scanResultBlob;
-                    // In v9.2.0+, we key off a new property called wasProcessed to determine if we successfully processed the Session result on the Server.
-                    // Device SDK UI flow is now driven by the proceedToNextStep function, which should receive the scanResultBlob from the Server SDK response.
-                    if (responseJSON.wasProcessed) {
-                        // Demonstrates dynamically setting the Success Screen Message.
-                        FaceTecSDK.FaceTecCustomization.setOverrideResultScreenSuccessMessage("Liveness\nConfirmed");
-                        // In v9.2.0+, simply pass in scanResultBlob to the proceedToNextStep function to advance the User flow.
-                        // scanResultBlob is a proprietary, encrypted blob that controls the logic for what happens next for the User.
-                        faceScanResultCallback.proceedToNextStep(scanResultBlob);
-                    }
-                    else {
-                        // CASE:  UNEXPECTED response from API.  Our Sample Code keys off a wasProcessed boolean on the root of the JSON object --> You define your own API contracts with yourself and may choose to do something different here based on the error.
-                        console.log("Unexpected API response, cancelling out.");
+        if (false) {
+            this.latestNetworkRequest = new XMLHttpRequest();
+            this.latestNetworkRequest.open("POST", Config.BaseURL + "/liveness-3d");
+            this.latestNetworkRequest.setRequestHeader("Content-Type", "application/json");
+            this.latestNetworkRequest.setRequestHeader("X-Device-Key", Config.DeviceKeyIdentifier);
+            this.latestNetworkRequest.setRequestHeader("X-User-Agent", FaceTecSDK.createFaceTecAPIUserAgentString(sessionResult.sessionId));
+            this.latestNetworkRequest.onreadystatechange = function () {
+                //
+                // Part 6:  In our Sample, we evaluate a boolean response and treat true as was successfully processed and should proceed to next step,
+                // and handle all other responses by cancelling out.
+                // You may have different paradigms in your own API and are free to customize based on these.
+                //
+                if (_this.latestNetworkRequest.readyState === XMLHttpRequest.DONE) {
+                    try {
+                        var responseJSON = JSON.parse(_this.latestNetworkRequest.responseText);
+                        var scanResultBlob = responseJSON.scanResultBlob;
+                        // In v9.2.0+, we key off a new property called wasProcessed to determine if we successfully processed the Session result on the Server.
+                        // Device SDK UI flow is now driven by the proceedToNextStep function, which should receive the scanResultBlob from the Server SDK response.
+                        if (responseJSON.wasProcessed) {
+                            // Demonstrates dynamically setting the Success Screen Message.
+                            FaceTecSDK.FaceTecCustomization.setOverrideResultScreenSuccessMessage("Liveness\nConfirmed");
+                            // In v9.2.0+, simply pass in scanResultBlob to the proceedToNextStep function to advance the User flow.
+                            // scanResultBlob is a proprietary, encrypted blob that controls the logic for what happens next for the User.
+                            faceScanResultCallback.proceedToNextStep(scanResultBlob);
+                        } else {
+                            // CASE:  UNEXPECTED response from API.  Our Sample Code keys off a wasProcessed boolean on the root of the JSON object --> You define your own API contracts with yourself and may choose to do something different here based on the error.
+                            console.log("Unexpected API response, cancelling out.");
+                            faceScanResultCallback.cancel();
+                        }
+                    } catch (_a) {
+                        // CASE:  Parsing the response into JSON failed --> You define your own API contracts with yourself and may choose to do something different here based on the error.  Solid server-side code should ensure you don't get to this case.
+                        console.log("Exception while handling API response, cancelling out.");
                         faceScanResultCallback.cancel();
                     }
                 }
-                catch (_a) {
-                    // CASE:  Parsing the response into JSON failed --> You define your own API contracts with yourself and may choose to do something different here based on the error.  Solid server-side code should ensure you don't get to this case.
-                    console.log("Exception while handling API response, cancelling out.");
-                    faceScanResultCallback.cancel();
+            };
+            this.latestNetworkRequest.onerror = function () {
+                // CASE:  Network Request itself is erroring --> You define your own API contracts with yourself and may choose to do something different here based on the error.
+                console.log("XHR error, cancelling.");
+                faceScanResultCallback.cancel();
+            };
+            //
+            // Part 7:  Demonstrates updating the Progress Bar based on the progress event.
+            //
+            this.latestNetworkRequest.upload.onprogress = function (event) {
+                var progress = event.loaded / event.total;
+                faceScanResultCallback.uploadProgress(progress);
+            };
+            //
+            // Part 8:  Actually send the request.
+            //
+            var jsonStringToUpload = JSON.stringify(parameters);
+            this.latestNetworkRequest.send(jsonStringToUpload);
+            //
+            // Part 9:  For better UX, update the User if the upload is taking a while.  You are free to customize and enhance this behavior to your liking.
+            //
+            window.setTimeout(function () {
+                if (_this.latestNetworkRequest.readyState === XMLHttpRequest.DONE) {
+                    return;
                 }
-            }
-        };
-        this.latestNetworkRequest.onerror = function () {
-            // CASE:  Network Request itself is erroring --> You define your own API contracts with yourself and may choose to do something different here based on the error.
-            console.log("XHR error, cancelling.");
-            faceScanResultCallback.cancel();
-        };
-        //
-        // Part 7:  Demonstrates updating the Progress Bar based on the progress event.
-        //
-        this.latestNetworkRequest.upload.onprogress = function (event) {
-            var progress = event.loaded / event.total;
-            faceScanResultCallback.uploadProgress(progress);
-        };
-        //
-        // Part 8:  Actually send the request.
-        //
-        var jsonStringToUpload = JSON.stringify(parameters);
-        this.latestNetworkRequest.send(jsonStringToUpload);
-        //
-        // Part 9:  For better UX, update the User if the upload is taking a while.  You are free to customize and enhance this behavior to your liking.
-        //
-        window.setTimeout(function () {
-            if (_this.latestNetworkRequest.readyState === XMLHttpRequest.DONE) {
-                return;
-            }
-            faceScanResultCallback.uploadMessageOverride("Still Uploading...");
-        }, 6000);
+                faceScanResultCallback.uploadMessageOverride("Still Uploading...");
+            }, 6000);
+        }
     };
     return LivenessCheckProcessor;
 }());
