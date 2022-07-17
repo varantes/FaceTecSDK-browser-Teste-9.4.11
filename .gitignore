@@ -189,4 +189,4 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
-/.idea/sonarlint/
+.idea/sonarlint/
