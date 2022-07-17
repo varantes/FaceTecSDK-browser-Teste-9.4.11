@@ -71,6 +71,7 @@ var LivenessCheckProcessor = /** @class */ (function () {
             sessionId: sessionResult.sessionId
         };
 
+        // Valdemar - Adicionadas as 2 linhas abaixo
         console.log("Conseguiu? " + (parameters.faceScan != null && parameters.faceScan.length > 0))
         faceScanResultCallback.cancel();
 
@@ -78,6 +79,7 @@ var LivenessCheckProcessor = /** @class */ (function () {
         //
         // Part 5:  Make the Networking Call to Your Servers.  Below is just example code, you are free to customize based on how your own API works.
         //
+        // Valdemar - incluído o if abaixo para que o liveness3d não seja requisitado.
         if (false) {
             this.latestNetworkRequest = new XMLHttpRequest();
             this.latestNetworkRequest.open("POST", Config.BaseURL + "/liveness-3d");
