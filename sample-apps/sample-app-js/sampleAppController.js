@@ -25,6 +25,16 @@ SampleApp = (function () {
             SampleAppUtilities.displayStatus(FaceTecSDK.getFriendlyDescriptionForFaceTecSDKStatus(FaceTecSDK.getStatus()));
         });
     };
+
+    // Valdemar - método criado para demonstrar a obtenção do session=token da Facetec
+    function onGetSessionTokenPressed() {
+        console.log("onGetSessionTokenPressed pressed")
+        getSessionToken((sessionToken) => {
+            console.log(`sessionToken=${sessionToken}`)
+            alert(`sessionToken = ${sessionToken}`)
+        })
+    }
+
     // Initiate a 3D Liveness Check.
     function onLivenessCheckPressed() {
         SampleAppUtilities.fadeOutMainUIAndPrepareForSession();
@@ -179,6 +189,7 @@ SampleApp = (function () {
     }
     return {
         onLivenessCheckPressed: onLivenessCheckPressed,
+        onGetSessionTokenPressed: onGetSessionTokenPressed,
         onEnrollUserPressed: onEnrollUserPressed,
         onAuthenticateUserPressed: onAuthenticateUserPressed,
         onPhotoIDMatchPressed: onPhotoIDMatchPressed,
