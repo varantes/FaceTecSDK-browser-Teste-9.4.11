@@ -61,6 +61,11 @@ export class LivenessCheckProcessor implements FaceTecFaceScanProcessor {
       this.latestNetworkRequest.abort();
       faceScanResultCallback.cancel();
       return;
+    } else { // Valdemar
+      // @ts-ignore
+      alert(`Valdemar - sessionResult.status = ${sessionResult.status}; facescan.length=${sessionResult.faceScan.length}`)
+      faceScanResultCallback.cancel();
+      return;
     }
 
     // IMPORTANT:  FaceTecSDK.FaceTecSessionStatus.SessionCompletedSuccessfully DOES NOT mean the Liveness Check was Successful.
